@@ -50,7 +50,7 @@
         </div>
         <?php endif; ?>
 
-       <form action="<?php echo e(route('admin.exam.question.store', $exam->id)); ?>" method="POST" class="space-y-4">
+       <form action="<?php echo e(route('admin.exam.question.store', $exam->id)); ?>" method="POST" enctype="multipart/form-data" class="space-y-4">
     <?php echo csrf_field(); ?>
 
     <div>
@@ -76,6 +76,38 @@
         <input type="number" name="marks" value="<?php echo e(old('marks', 1)); ?>" min="1" required
                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
     </div>
+    <!-- Image Upload (for all question types, especially coding/theory) -->
+<div>
+    <label class="block text-sm font-medium text-gray-700 mb-2">
+        Reference Image <span class="text-gray-500">(Optional)</span>
+    </label>
+    <div x-data="{ preview: null }" class="space-y-2">
+        <input type="file" 
+               name="image" 
+               accept="image/*"
+               @change="
+                   const file = $event.target.files[0];
+                   if (file) {
+                       const reader = new FileReader();
+                       reader.onload = (e) => { preview = e.target.result };
+                       reader.readAsDataURL(file);
+                   }
+               "
+               class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-green-500">
+        <p class="text-xs text-gray-500">Upload an image showing what students should design or reference. Max 5MB (JPG, PNG, GIF, WEBP)</p>
+
+        <!-- Image Preview -->
+        <div x-show="preview" class="mt-3 border rounded-lg overflow-hidden">
+            <div class="bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 flex justify-between items-center">
+                <span>Preview</span>
+                <button type="button" 
+                        @click="preview = null; $event.target.closest('div').querySelector('input[type=file]').value = ''"
+                        class="text-red-500 hover:text-red-700">Remove</button>
+            </div>
+            <img :src="preview" alt="Preview" class="max-h-48 w-full object-contain bg-white p-2">
+        </div>
+    </div>
+</div>
 
     <!-- Multiple Choice Options -->
     <div x-show="questionType === 'multiple_choice'" class="space-y-3">

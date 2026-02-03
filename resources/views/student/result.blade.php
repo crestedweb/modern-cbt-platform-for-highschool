@@ -99,6 +99,19 @@
                 </span>
                 <div class="flex-1">
                     <p class="text-gray-800 font-medium">{{ $question->question_text }}</p>
+                    <p class="text-gray-800 font-medium">{{ $question->question_text }}</p>
+
+<!-- Show reference image in results too -->
+@if($question->image_path)
+<div class="mt-3 border rounded-lg overflow-hidden">
+    <div class="bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Reference Image</div>
+    <div class="p-2 bg-white">
+        <img src="{{ $question->getImageUrl() }}" 
+             alt="Reference" 
+             class="max-h-40 object-contain border border-gray-200 rounded">
+    </div>
+</div>
+@endif
                     <div class="mt-2 flex items-center gap-2 flex-wrap">
                         <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
                             {{ ucwords(str_replace('_', ' ', $question->question_type)) }}

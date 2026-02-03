@@ -170,76 +170,78 @@ public function updateExam(Request $request, $examId)
         return view('admin.exams.questions', compact('exam'));
     }
 
-    public function storeQuestion(Request $request, $examId)
+   public function storeQuestion(Request $request, $examId)
 {
     $exam = Exam::findOrFail($examId);
-    
-    // Check permission
-    if (!Auth::user()->isAdmin() && $exam->created_by != Auth::id()) {
-        abort(403);
-    }
 
-    // Basic validation
-    $validated = $request->validate([
+    $request->validate([
         'question_text' => 'required|string',
         'question_type' => 'required|in:multiple_choice,theory,coding,fill_blank',
         'marks' => 'required|integer|min:1',
+        'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
     ]);
 
-    // Type-specific validation
+    // Handle image upload
+    $imagePath = null;
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('question_images', 'public');
+    }
+
+    // Conditional validation based on question type
     if ($request->question_type === 'multiple_choice') {
         $request->validate([
             'options' => 'required|array|min:4',
-            'options.A' => 'required|string',
-            'options.B' => 'required|string',
-            'options.C' => 'required|string',
-            'options.D' => 'required|string',
             'correct_answer' => 'required|in:A,B,C,D',
         ]);
-        $validated['options'] = $request->options;
-        $validated['correct_answer'] = $request->correct_answer;
-    } elseif ($request->question_type === 'fill_blank') {
+    }
+
+    if ($request->question_type === 'fill_blank') {
         $request->validate([
             'correct_answer' => 'required|string',
         ]);
-        $validated['correct_answer'] = $request->correct_answer;
-        $validated['options'] = null;
-    } else {
-        // Theory and Coding don't need correct_answer or options
-        $validated['correct_answer'] = null;
-        $validated['options'] = null;
     }
 
-    $order = $exam->questions()->max('order') + 1;
+    $questionData = [
+        'exam_id' => $exam->id,
+        'question_text' => $request->question_text,
+        'question_type' => $request->question_type,
+        'marks' => $request->marks,
+        'order' => $exam->questions()->count() + 1,
+        'image_path' => $imagePath,
+    ];
 
-    Question::create([
-        'exam_id' => $examId,
-        'question_text' => $validated['question_text'],
-        'question_type' => $validated['question_type'],
-        'marks' => $validated['marks'],
-        'options' => $validated['options'] ?? null,
-        'correct_answer' => $validated['correct_answer'] ?? null,
-        'order' => $order,
-    ]);
+    if ($request->question_type === 'multiple_choice') {
+        $questionData['options'] = $request->options;
+        $questionData['correct_answer'] = $request->correct_answer;
+    }
 
-    return redirect()->back()->with('success', 'Question added successfully!');
+    if ($request->question_type === 'fill_blank') {
+        $questionData['correct_answer'] = $request->correct_answer;
+    }
+
+    Question::create($questionData);
+
+    return redirect()->route('admin.exam.questions', $exam->id)
+        ->with('success', 'Question added successfully!');
 }
+   public function deleteQuestion($questionId)
+{
+    $question = Question::findOrFail($questionId);
+    $examId = $question->exam_id;
 
-    public function deleteQuestion($questionId)
-    {
-        $question = Question::findOrFail($questionId);
-        $exam = $question->exam;
-        
-        // Check permission
-        if (!Auth::user()->isAdmin() && $exam->created_by != Auth::id()) {
-            abort(403);
+    // Delete image if exists
+    if ($question->image_path) {
+        $path = public_path('storage/' . $question->image_path);
+        if (file_exists($path)) {
+            unlink($path);
         }
-
-        $question->delete();
-
-        return redirect()->back()->with('success', 'Question deleted successfully!');
     }
 
+    $question->delete();
+
+    return redirect()->route('admin.exam.questions', $examId)
+        ->with('success', 'Question deleted successfully!');
+}
     public function examResults($examId)
     {
         $exam = Exam::with(['attempts.user', 'attempts.answers'])

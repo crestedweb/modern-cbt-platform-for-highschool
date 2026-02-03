@@ -13,10 +13,11 @@ class Question extends Model
         'exam_id',
         'question_text',
         'question_type',
-        'marks',
         'options',
         'correct_answer',
+        'marks',
         'order',
+        'image_path',
     ];
 
     protected function casts(): array
@@ -25,11 +26,6 @@ class Question extends Model
             'options' => 'array',
         ];
     }
-
-    const TYPE_MULTIPLE_CHOICE = 'multiple_choice';
-    const TYPE_THEORY = 'theory';
-    const TYPE_CODING = 'coding';
-    const TYPE_FILL_BLANK = 'fill_blank';
 
     public function exam()
     {
@@ -43,6 +39,15 @@ class Question extends Model
 
     public function isObjective(): bool
     {
-        return in_array($this->question_type, [self::TYPE_MULTIPLE_CHOICE, self::TYPE_FILL_BLANK]);
+        return in_array($this->question_type, ['multiple_choice', 'fill_blank']);
+    }
+
+    // Get full image URL
+    public function getImageUrl(): ?string
+    {
+        if ($this->image_path) {
+            return asset('storage/' . $this->image_path);
+        }
+        return null;
     }
 }
