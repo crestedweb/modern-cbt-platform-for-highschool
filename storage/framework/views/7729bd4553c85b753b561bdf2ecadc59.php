@@ -1,15 +1,15 @@
-@extends('layouts.app')
 
-@section('title', 'Take Exam')
 
-@section('content')
+<?php $__env->startSection('title', 'Take Exam'); ?>
+
+<?php $__env->startSection('content'); ?>
 <div x-data="examApp()" x-init="init()" class="space-y-6">
     <!-- Timer and Header -->
     <div class="bg-white rounded-lg shadow p-6">
         <div class="flex justify-between items-center">
             <div>
-                <h2 class="text-2xl font-bold text-gray-800">{{ $attempt->exam->title }}</h2>
-                <p class="text-gray-600">{{ $attempt->exam->subject }}</p>
+                <h2 class="text-2xl font-bold text-gray-800"><?php echo e($attempt->exam->title); ?></h2>
+                <p class="text-gray-600"><?php echo e($attempt->exam->subject); ?></p>
             </div>
             <div class="text-center">
                 <div class="text-3xl font-bold" :class="timeRemaining < 300 ? 'text-red-600' : 'text-green-600'">
@@ -22,32 +22,35 @@
 
     <!-- Questions -->
     <form id="exam-form" @submit.prevent="submitExam">
-        @csrf
+        <?php echo csrf_field(); ?>
         <div class="bg-white rounded-lg shadow p-6 space-y-8">
-            @foreach($questions as $index => $question)
-            <div class="border-b pb-6 last:border-b-0" id="question-{{ $question->id }}">
+            <?php $__currentLoopData = $questions; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $index => $question): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <div class="border-b pb-6 last:border-b-0" id="question-<?php echo e($question->id); ?>">
                 <div class="flex items-start mb-4">
                     <span class="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-semibold mr-3 flex-shrink-0">
-                        {{ $index + 1 }}
+                        <?php echo e($index + 1); ?>
+
                     </span>
                     <div class="flex-1">
-                        <p class="text-gray-800 font-medium mb-2">{{ $question->question_text }}</p>
+                        <p class="text-gray-800 font-medium mb-2"><?php echo e($question->question_text); ?></p>
                         <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                            {{ $question->marks }} {{ $question->marks == 1 ? 'mark' : 'marks' }}
+                            <?php echo e($question->marks); ?> <?php echo e($question->marks == 1 ? 'mark' : 'marks'); ?>
+
                         </span>
                         <span class="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded ml-2">
-                            {{ ucwords(str_replace('_', ' ', $question->question_type)) }}
+                            <?php echo e(ucwords(str_replace('_', ' ', $question->question_type))); ?>
+
                         </span>
                     </div>
                 </div>
 
-                @php
+                <?php
                     $savedAnswer = $attempt->answers->where('question_id', $question->id)->first();
-                @endphp
+                ?>
 
                 <div class="ml-11">
                     <!-- Reference Image (if uploaded by teacher) -->
-                    @if($question->image_path)
+                    <?php if($question->image_path): ?>
                     <div class="mb-6 border rounded-lg overflow-hidden">
                         <div class="bg-blue-50 px-4 py-2 border-b flex justify-between items-center">
                             <span class="text-sm font-semibold text-blue-700">Target Design / Reference Image</span>
@@ -62,7 +65,7 @@
 
                         <!-- Normal View -->
                         <div x-show="!zoomed" class="p-4 bg-white flex justify-center">
-                            <img src="{{ $question->getImageUrl() }}" 
+                            <img src="<?php echo e($question->getImageUrl()); ?>" 
                                  alt="Reference design" 
                                  class="max-h-64 object-contain border border-gray-200 rounded shadow-sm">
                         </div>
@@ -76,77 +79,78 @@
                                         class="absolute top-2 right-2 bg-white text-gray-800 rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:bg-gray-100">
                                     ✕
                                 </button>
-                                <img src="{{ $question->getImageUrl() }}" 
+                                <img src="<?php echo e($question->getImageUrl()); ?>" 
                                      alt="Reference design zoomed" 
                                      class="max-w-full max-h-screen object-contain rounded-lg shadow-xl">
                             </div>
                         </div>
                     </div>
-                    @endif
+                    <?php endif; ?>
 
-                    @if($question->question_type === 'multiple_choice')
+                    <?php if($question->question_type === 'multiple_choice'): ?>
                         <!-- Multiple Choice -->
                         <div class="space-y-2">
-                            @foreach($question->options as $key => $option)
+                            <?php $__currentLoopData = $question->options; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $key => $option): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <label class="flex items-center p-3 border rounded hover:bg-gray-50 cursor-pointer transition">
                                 <input 
                                     type="radio" 
-                                    name="question_{{ $question->id }}" 
-                                    value="{{ $key }}"
-                                    {{ $savedAnswer && $savedAnswer->answer_text == $key ? 'checked' : '' }}
-                                    @change="saveAnswer({{ $question->id }}, $event.target.value)"
+                                    name="question_<?php echo e($question->id); ?>" 
+                                    value="<?php echo e($key); ?>"
+                                    <?php echo e($savedAnswer && $savedAnswer->answer_text == $key ? 'checked' : ''); ?>
+
+                                    @change="saveAnswer(<?php echo e($question->id); ?>, $event.target.value)"
                                     class="mr-3 h-4 w-4 text-green-600"
                                 >
-                                <span><strong>{{ $key }}.</strong> {{ $option }}</span>
+                                <span><strong><?php echo e($key); ?>.</strong> <?php echo e($option); ?></span>
                             </label>
-                            @endforeach
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </div>
 
-                    @elseif($question->question_type === 'fill_blank')
+                    <?php elseif($question->question_type === 'fill_blank'): ?>
                         <!-- Fill in the Blank -->
                         <input 
                             type="text" 
-                            name="question_{{ $question->id }}"
-                            value="{{ $savedAnswer->answer_text ?? '' }}"
-                            @change="saveAnswer({{ $question->id }}, $event.target.value)"
+                            name="question_<?php echo e($question->id); ?>"
+                            value="<?php echo e($savedAnswer->answer_text ?? ''); ?>"
+                            @change="saveAnswer(<?php echo e($question->id); ?>, $event.target.value)"
                             class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                             placeholder="Type your answer here..."
                         >
 
-                    @elseif($question->question_type === 'theory')
+                    <?php elseif($question->question_type === 'theory'): ?>
                         <!-- Theory/Essay -->
                         <textarea 
-                            name="question_{{ $question->id }}"
+                            name="question_<?php echo e($question->id); ?>"
                             rows="8"
-                            @change="saveAnswer({{ $question->id }}, $event.target.value)"
+                            @change="saveAnswer(<?php echo e($question->id); ?>, $event.target.value)"
                             class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-500"
                             placeholder="Write your answer here..."
-                        >{{ $savedAnswer->answer_text ?? '' }}</textarea>
+                        ><?php echo e($savedAnswer->answer_text ?? ''); ?></textarea>
 
-                    @elseif($question->question_type === 'coding')
+                    <?php elseif($question->question_type === 'coding'): ?>
     <!-- Coding with Multi-File Support -->
-    <div x-data="{ showPreview: false }" data-question="{{ $question->id }}">
+    <div x-data="{ showPreview: false }" data-question="<?php echo e($question->id); ?>">
         <!-- File Tabs -->
         <div class="bg-gray-900 p-2 rounded-t flex gap-2 items-center flex-wrap">
             <button type="button" 
-                    onclick="switchFile({{ $question->id }}, 'index.html')"
+                    onclick="switchFile(<?php echo e($question->id); ?>, 'index.html')"
                     class="file-tab bg-green-600 text-white px-3 py-1 rounded text-xs font-semibold">
                 📄 index.html
             </button>
             <button type="button"
-                    onclick="switchFile({{ $question->id }}, 'styles.css')"
+                    onclick="switchFile(<?php echo e($question->id); ?>, 'styles.css')"
                     class="file-tab bg-gray-700 text-gray-300 px-3 py-1 rounded text-xs font-semibold">
                 🎨 styles.css
             </button>
             <button type="button"
-                    onclick="switchFile({{ $question->id }}, 'script.js')"
+                    onclick="switchFile(<?php echo e($question->id); ?>, 'script.js')"
                     class="file-tab bg-gray-700 text-gray-300 px-3 py-1 rounded text-xs font-semibold">
                 ⚡ script.js
             </button>
             
             <div class="ml-auto flex gap-2">
-                <select id="template-select-{{ $question->id }}" 
-                        onchange="loadTemplate({{ $question->id }}, this.value)"
+                <select id="template-select-<?php echo e($question->id); ?>" 
+                        onchange="loadTemplate(<?php echo e($question->id); ?>, this.value)"
                         class="bg-gray-700 text-white text-xs px-2 py-1 rounded">
                     <option value="">Load Template...</option>
                     <option value="html-basic">HTML Basic</option>
@@ -167,24 +171,24 @@
         <div class="grid" :class="showPreview ? 'grid-cols-2 gap-2' : 'grid-cols-1'">
             <div>
                 <textarea 
-                    id="code-editor-{{ $question->id }}"
-                    name="question_{{ $question->id }}"
+                    id="code-editor-<?php echo e($question->id); ?>"
+                    name="question_<?php echo e($question->id); ?>"
                     class="code-editor"
-                    data-question-id="{{ $question->id }}"
-                >{{ $savedAnswer->answer_text ?? '' }}</textarea>
+                    data-question-id="<?php echo e($question->id); ?>"
+                ><?php echo e($savedAnswer->answer_text ?? ''); ?></textarea>
             </div>
 
             <div x-show="showPreview" class="border rounded overflow-hidden bg-white">
                 <div class="bg-gray-100 p-2 border-b flex justify-between items-center">
                     <span class="text-xs font-semibold">Live Preview</span>
                     <button type="button" 
-                            @click="updatePreview({{ $question->id }})"
+                            @click="updatePreview(<?php echo e($question->id); ?>)"
                             class="text-xs bg-blue-500 text-white px-2 py-1 rounded">
                         🔄 Refresh
                     </button>
                 </div>
                 <iframe 
-                    id="preview-frame-{{ $question->id }}"
+                    id="preview-frame-<?php echo e($question->id); ?>"
                     class="w-full bg-white"
                     style="height: 350px; border: none;"
                     sandbox="allow-scripts"
@@ -192,10 +196,10 @@
             </div>
         </div>
     </div>
-@endif
+<?php endif; ?>
                 </div>
             </div>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
 
         <!-- Submit Section -->
@@ -221,7 +225,7 @@
         </form>
 </div>
 
-@push('scripts')
+<?php $__env->startPush('scripts'); ?>
 <!-- CodeMirror CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
@@ -429,7 +433,7 @@ function loadTemplate(questionId, templateKey) {
 
 function examApp() {
     return {
-        timeRemaining: {{ $attempt->time_remaining ?? ($attempt->exam->duration_minutes * 60) }},
+        timeRemaining: <?php echo e($attempt->time_remaining ?? ($attempt->exam->duration_minutes * 60)); ?>,
         timer: null,
         isSaving: false,
         isSubmitting: false,
@@ -481,7 +485,7 @@ function examApp() {
             this.isSaving = true;
 
             try {
-                const response = await fetch('{{ route("student.save-answer", $attempt->id) }}', {
+                const response = await fetch('<?php echo e(route("student.save-answer", $attempt->id)); ?>', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -537,7 +541,7 @@ function examApp() {
 
             const form = document.createElement('form');
             form.method = 'POST';
-            form.action = '{{ route("student.submit-exam", $attempt->id) }}';
+            form.action = '<?php echo e(route("student.submit-exam", $attempt->id)); ?>';
             
             const csrf = document.createElement('input');
             csrf.type = 'hidden';
@@ -574,6 +578,7 @@ function examApp() {
     color: white;
 }
 </style>
-@endpush
+<?php $__env->stopPush(); ?>
 
-@endsection
+<?php $__env->stopSection(); ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\cbt\resources\views/student/take-exam.blade.php ENDPATH**/ ?>

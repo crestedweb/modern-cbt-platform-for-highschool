@@ -86,3 +86,7 @@ Route::put('/exams/{exam}', [AdminController::class, 'updateExam'])->name('exam.
         Route::get('/attempts/{attempt}/print', [AdminController::class, 'printScript'])->name('attempt.print');
     });
 });
+
+Auth::routes();
+
+Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
