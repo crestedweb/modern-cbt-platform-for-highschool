@@ -46,7 +46,7 @@ class Question extends Model
     public function getImageUrl(): ?string
     {
         if ($this->image_path) {
-            return asset('storage/' . $this->image_path);
+            return asset('public/' . $this->image_path);
         }
         return null;
     }
